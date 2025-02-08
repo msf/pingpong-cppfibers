@@ -8,13 +8,14 @@ proto:
 	mkdir -p go/pkg/proto
 	protoc -I=proto --cpp_out=cpp/build/proto --grpc_out=cpp/build/proto \
 		--plugin=protoc-gen-grpc=`which grpc_cpp_plugin` proto/pingpong.proto
-	protoc -I=proto --go_out=go/pkg/proto --go-grpc_out=go/pkg/proto \
+	protoc -I=proto --go_out=go --go-grpc_out=go \
 		proto/pingpong.proto
 
 # C++ Server
 cpp: proto
-	cd cpp && cmake -B build -DCMAKE_CXX_COMPILER=clang++-19
+	cd cpp && cmake -B build 
 	cd cpp && cmake --build build -j
+	cd cpp && cp -f build/server ../bin/server
 
 # Go Client
 go: proto

@@ -7,7 +7,7 @@ import (
     
     "google.golang.org/grpc"
     "google.golang.org/grpc/credentials/insecure"
-    pb "pkg/proto/pingpong"
+    pb "pingpong/pkg/proto/pingpong"
 )
 
 func main() {
