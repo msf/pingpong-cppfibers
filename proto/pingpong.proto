@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package pingpong;
+
+option go_package = "pkg/proto/pingpong";
+
+service PingPong {
+  rpc StreamPingPong(stream Ping) returns (stream Pong) {}
+}
+
+message Ping {
+  uint64 sequence = 1;
+  uint64 timestamp = 2;
+  bytes payload = 3;
+}
+
+message Pong {
+  uint64 sequence = 1;
+  uint64 timestamp = 2;
+  uint64 server_timestamp = 3;
+  bytes payload = 4;
+}
