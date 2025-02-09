@@ -13,7 +13,7 @@ import (
 func main() {
 	// Basic connection without optimizations
 	conn, err := grpc.Dial(
-		"localhost:50051",
+		"unix:///tmp/pingpong.sock",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
