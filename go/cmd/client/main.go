@@ -50,7 +50,7 @@ func main() {
             }
             count++
 
-        if seq%1000 == 0 {
+        if seq%100000 == 0 {
             elapsed := time.Since(start).Seconds()
             log.Printf("Messages/sec: %.2f", float64(count)/elapsed)
         }
