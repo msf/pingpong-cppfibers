@@ -1,4 +1,5 @@
 #include <boost/fiber/all.hpp>
+#include <boost/program_options.hpp>
 #include <chrono>
 #include <grpcpp/grpcpp.h>
 #include <mutex>
@@ -61,17 +62,33 @@ public:
   }
 };
 
-class BasicPingPongService final : public PingPong::Service {
+struct ServerConfig {
+  bool use_fibers;
+  int num_threads;
+  std::string socket_path;
+};
+
+class PingPongService final : public PingPong::Service {
+  const bool use_fibers_;
+
+public:
+  explicit PingPongService(bool use_fibers) : use_fibers_(use_fibers) {}
+
   Status StreamPingPong(ServerContext *context,
                         ServerReaderWriter<Pong, Ping> *stream) override {
-    boost::fibers::use_scheduling_algorithm<RPCScheduler>();
+    if (use_fibers_) {
+      boost::fibers::use_scheduling_algorithm<RPCScheduler>();
+      return HandleStreamFiber(stream);
+    }
+    return HandleStreamThread(stream);
+  }
 
-    // Simple fiber to handle each connection
-    // boost::fibers::fiber([stream]()
-    {
+private:
+  Status HandleStreamFiber(ServerReaderWriter<Pong, Ping> *stream) {
+    boost::fibers::fiber([stream]() {
       Ping ping;
       while (stream->Read(&ping)) {
-        // boost::this_fiber::sleep_for(std::chrono::microseconds(1));
+        boost::this_fiber::sleep_for(std::chrono::microseconds(4));
         Pong pong;
         pong.set_sequence(ping.sequence());
         pong.set_timestamp(ping.timestamp());
@@ -85,35 +102,69 @@ class BasicPingPongService final : public PingPong::Service {
           break;
         }
       }
-    }
-    //).join();
+    }).join();
+    return Status::OK;
+  }
 
+  Status HandleStreamThread(ServerReaderWriter<Pong, Ping> *stream) {
+    Ping ping;
+    while (stream->Read(&ping)) {
+      std::this_thread::sleep_for(std::chrono::microseconds(4));
+      Pong pong;
+      pong.set_sequence(ping.sequence());
+      pong.set_timestamp(ping.timestamp());
+      pong.set_server_timestamp(
+          std::chrono::duration_cast<std::chrono::nanoseconds>(
+              std::chrono::high_resolution_clock::now().time_since_epoch())
+              .count());
+      pong.set_payload(ping.payload());
+
+      if (!stream->Write(pong)) {
+        break;
+      }
+    }
     return Status::OK;
   }
 };
 
-int main() {
-  BasicPingPongService service;
+int main(int argc, char *argv[]) {
+  namespace po = boost::program_options;
+  po::options_description desc("Allowed options");
+  desc.add_options()("fibers", po::value<bool>()->default_value(false),
+                     "Use fibers")("threads",
+                                   po::value<int>()->default_value(4),
+                                   "Number of worker threads")(
+      "socket", po::value<std::string>()->default_value("/tmp/pingpong.sock"),
+      "Socket path");
+
+  po::variables_map vm;
+  po::store(po::parse_command_line(argc, argv, desc), vm);
+  po::notify(vm);
+
+  ServerConfig config{.use_fibers = vm["fibers"].as<bool>(),
+                      .num_threads = vm["threads"].as<int>(),
+                      .socket_path = vm["socket"].as<std::string>()};
+
+  PingPongService service(config.use_fibers);
   ServerBuilder builder;
 
-  // Basic setup without optimizations
-  const auto addr = "unix:///tmp/pingpong.sock";
-  builder.AddListeningPort(addr, grpc::InsecureServerCredentials());
-  // Performance tuning
+  // Resource quota applies to both modes
+  auto resource_quota = grpc::ResourceQuota("pingpong_quota");
+  resource_quota.SetMaxThreads(config.num_threads);
+  builder.SetResourceQuota(resource_quota);
+
   const auto max_size = 16 * 1024;
   builder.SetMaxMessageSize(max_size);
   builder.SetMaxReceiveMessageSize(max_size);
   builder.SetMaxSendMessageSize(max_size);
 
-  // Resource quota for better control
-  auto resource_quota = grpc::ResourceQuota("pingpong_quota");
-  resource_quota.SetMaxThreads(4); // Main + worker thread
-  builder.SetResourceQuota(resource_quota);
-
+  builder.AddListeningPort("unix://" + config.socket_path,
+                           grpc::InsecureServerCredentials());
   builder.RegisterService(&service);
 
-  std::unique_ptr<Server> server(builder.BuildAndStart());
-  std::cout << "Server listening on " << addr << std::endl;
+  auto server = builder.BuildAndStart();
+  std::cout << "Server running in " << (config.use_fibers ? "fiber" : "thread")
+            << " mode with " << config.num_threads << " threads\n";
   server->Wait();
 
   return 0;

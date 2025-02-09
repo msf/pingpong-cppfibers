@@ -1,0 +1,20 @@
+[
+{
+  "directory": "/home/mig/play/ping-pong/cpp/build",
+  "command": "clang++-19  -I/home/mig/play/ping-pong/cpp/build -I/home/mig/play/ping-pong/cpp/build/proto  -fPIC -std=gnu++20 -fPIC -pthread -o CMakeFiles/proto.dir/proto/pingpong.grpc.pb.cc.o -c /home/mig/play/ping-pong/cpp/build/proto/pingpong.grpc.pb.cc",
+  "file": "/home/mig/play/ping-pong/cpp/build/proto/pingpong.grpc.pb.cc",
+  "output": "CMakeFiles/proto.dir/proto/pingpong.grpc.pb.cc.o"
+},
+{
+  "directory": "/home/mig/play/ping-pong/cpp/build",
+  "command": "clang++-19  -I/home/mig/play/ping-pong/cpp/build -I/home/mig/play/ping-pong/cpp/build/proto  -fPIC -std=gnu++20 -fPIC -pthread -o CMakeFiles/proto.dir/proto/pingpong.pb.cc.o -c /home/mig/play/ping-pong/cpp/build/proto/pingpong.pb.cc",
+  "file": "/home/mig/play/ping-pong/cpp/build/proto/pingpong.pb.cc",
+  "output": "CMakeFiles/proto.dir/proto/pingpong.pb.cc.o"
+},
+{
+  "directory": "/home/mig/play/ping-pong/cpp/build",
+  "command": "clang++-19 -DBOOST_ATOMIC_DYN_LINK -DBOOST_ATOMIC_NO_LIB -DBOOST_CONTEXT_DYN_LINK -DBOOST_CONTEXT_NO_LIB -DBOOST_FIBER_DYN_LINK -DBOOST_FIBER_NO_LIB -DBOOST_FILESYSTEM_DYN_LINK -DBOOST_FILESYSTEM_NO_LIB -DBOOST_PROGRAM_OPTIONS_DYN_LINK -DBOOST_PROGRAM_OPTIONS_NO_LIB -I/home/mig/play/ping-pong/cpp/build -I/home/mig/play/ping-pong/cpp/build/proto  -fPIC -std=gnu++20 -flto=thin -O3 -march=native -mtune=native -flto -Wall -Wextra -fPIC -pthread -o CMakeFiles/server.dir/src/server.cpp.o -c /home/mig/play/ping-pong/cpp/src/server.cpp",
+  "file": "/home/mig/play/ping-pong/cpp/src/server.cpp",
+  "output": "CMakeFiles/server.dir/src/server.cpp.o"
+}
+]

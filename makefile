@@ -21,7 +21,7 @@ cpp: proto
 # Go Client
 go: proto
 	gofumpt -w go/cmd/client/main.go
-	cd go && go mod tidy && go build -o ../bin/client ./cmd/client
+	cd go && go mod tidy && GOAMD64=v3 go build -o ../bin/client ./cmd/client
 
 clean:
 	rm -rf cpp/build

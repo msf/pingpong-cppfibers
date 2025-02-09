@@ -1,0 +1,2 @@
+/usr/bin/llvm-ar-19 qc libproto.a CMakeFiles/proto.dir/proto/pingpong.grpc.pb.cc.o CMakeFiles/proto.dir/proto/pingpong.pb.cc.o
+/usr/bin/llvm-ranlib-19 libproto.a

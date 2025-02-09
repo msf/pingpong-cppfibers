@@ -10,7 +10,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
 # Find required packages
-find_package(Boost REQUIRED COMPONENTS fiber)
+find_package(Boost REQUIRED COMPONENTS fiber program_options)
 find_package(gRPC CONFIG REQUIRED)
 find_package(Protobuf REQUIRED)
 
@@ -49,6 +49,7 @@ target_link_libraries(server
     PRIVATE
     proto
     Boost::fiber
+    Boost::program_options
     gRPC::grpc++
 )
 
