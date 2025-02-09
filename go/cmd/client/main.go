@@ -12,9 +12,16 @@ import (
 
 func main() {
 	// Basic connection without optimizations
+	const max_size = 16 * 1024
 	conn, err := grpc.Dial(
 		"unix:///tmp/pingpong.sock",
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithInitialWindowSize(max_size),
+		grpc.WithInitialConnWindowSize(max_size),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(max_size),
+			grpc.MaxCallSendMsgSize(max_size),
+		),
 	)
 	if err != nil {
 		log.Fatalf("Failed to connect: %v", err)
