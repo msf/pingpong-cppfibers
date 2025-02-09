@@ -13,12 +13,14 @@ proto:
 
 # C++ Server
 cpp: proto
+	clang-format-19 -i cpp/src/server.cpp
 	cd cpp && cmake -B build 
 	cd cpp && cmake --build build -j
 	cd cpp && cp -f build/server ../bin/server
 
 # Go Client
 go: proto
+	gofumpt -w go/cmd/client/main.go
 	cd go && go mod tidy && go build -o ../bin/client ./cmd/client
 
 clean:

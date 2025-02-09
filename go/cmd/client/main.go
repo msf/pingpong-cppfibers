@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log"
 	"time"
 
@@ -11,6 +12,15 @@ import (
 )
 
 func main() {
+	payloadSize := flag.Int("payload", 0, "Payload size in bytes")
+	flag.Parse()
+
+	// Pre-generate payload of specified size
+	payload := make([]byte, *payloadSize)
+	for i := range payload {
+		payload[i] = byte(i % 256)
+	}
+
 	// Basic connection without optimizations
 	const max_size = 16 * 1024
 	conn, err := grpc.Dial(
@@ -36,6 +46,7 @@ func main() {
 
 	// Simple counter
 	count := 0
+	var bytesTransferred uint64
 	start := time.Now()
 
 	// Basic send loop
@@ -44,22 +55,26 @@ func main() {
 		ping := &pb.Ping{
 			Sequence:  seq,
 			Timestamp: uint64(time.Now().UnixNano()),
+			Payload:   payload,
 		}
 		if err := stream.Send(ping); err != nil {
 			log.Printf("Send error: %v", err)
 			break
 		}
 		seq++
-		_, err := stream.Recv()
+		pong, err := stream.Recv()
 		if err != nil {
 			log.Printf("Receive error: %v", err)
 			return
 		}
 		count++
+		bytesTransferred += 128 + uint64(len(pong.Payload))
 
 		if seq%100000 == 0 {
 			elapsed := time.Since(start).Seconds()
-			log.Printf("Messages/sec: %.2f", float64(count)/elapsed)
+			msgRate := float64(count) / elapsed
+			bytesRate := float64(bytesTransferred) / elapsed / 1024 / 1024 // MB/s
+			log.Printf("Msgs/sec: %.2f, Throughput: %.2f MB/s", msgRate, bytesRate)
 		}
 
 	}

@@ -71,7 +71,7 @@ class BasicPingPongService final : public PingPong::Service {
     {
       Ping ping;
       while (stream->Read(&ping)) {
-        boost::this_fiber::sleep_for(std::chrono::microseconds(4));
+        // boost::this_fiber::sleep_for(std::chrono::microseconds(1));
         Pong pong;
         pong.set_sequence(ping.sequence());
         pong.set_timestamp(ping.timestamp());
@@ -107,7 +107,7 @@ int main() {
 
   // Resource quota for better control
   auto resource_quota = grpc::ResourceQuota("pingpong_quota");
-  resource_quota.SetMaxThreads(2); // Main + worker thread
+  resource_quota.SetMaxThreads(4); // Main + worker thread
   builder.SetResourceQuota(resource_quota);
 
   builder.RegisterService(&service);

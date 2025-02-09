@@ -14,7 +14,7 @@ A high-performance gRPC ping-pong benchmark using C++ Boost Fibers for the serve
 On Debian/Ubuntu:
 ```bash
 # Install build tools
-apt install build-essential cmake clang-19 protobuf-compiler
+apt install build-essential cmake clang-19 clang-format-19 protobuf-compiler
 
 # Install gRPC development files
 apt install libgrpc++-dev libgrpc-dev protobuf-compiler-grpc
