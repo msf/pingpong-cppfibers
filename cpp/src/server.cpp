@@ -71,7 +71,7 @@ class BasicPingPongService final : public PingPong::Service {
     {
       Ping ping;
       while (stream->Read(&ping)) {
-        // boost::this_fiber::sleep_for(std::chrono::microseconds(10));
+        boost::this_fiber::sleep_for(std::chrono::microseconds(4));
         Pong pong;
         pong.set_sequence(ping.sequence());
         pong.set_timestamp(ping.timestamp());
