@@ -64,15 +64,18 @@ public:
 
 struct ServerConfig {
   bool use_fibers;
+  bool sleep;
   int num_threads;
   std::string socket_path;
 };
 
 class PingPongService final : public PingPong::Service {
   const bool use_fibers_;
+  const bool sleep_;
 
 public:
-  explicit PingPongService(bool use_fibers) : use_fibers_(use_fibers) {}
+  explicit PingPongService(bool use_fibers, bool sleep)
+      : use_fibers_(use_fibers), sleep_(sleep) {}
 
   Status StreamPingPong(ServerContext *context,
                         ServerReaderWriter<Pong, Ping> *stream) override {
@@ -85,10 +88,13 @@ public:
 
 private:
   Status HandleStreamFiber(ServerReaderWriter<Pong, Ping> *stream) {
-    boost::fibers::fiber([stream]() {
+    const bool use_sleep = sleep_;
+    boost::fibers::fiber([use_sleep, stream]() {
       Ping ping;
       while (stream->Read(&ping)) {
-        boost::this_fiber::sleep_for(std::chrono::microseconds(4));
+        if (use_sleep) {
+          boost::this_fiber::sleep_for(std::chrono::microseconds(4));
+        }
         Pong pong;
         pong.set_sequence(ping.sequence());
         pong.set_timestamp(ping.timestamp());
@@ -109,7 +115,9 @@ private:
   Status HandleStreamThread(ServerReaderWriter<Pong, Ping> *stream) {
     Ping ping;
     while (stream->Read(&ping)) {
-      std::this_thread::sleep_for(std::chrono::microseconds(4));
+      if (sleep_) {
+        std::this_thread::sleep_for(std::chrono::microseconds(4));
+      }
       Pong pong;
       pong.set_sequence(ping.sequence());
       pong.set_timestamp(ping.timestamp());
@@ -131,9 +139,11 @@ int main(int argc, char *argv[]) {
   namespace po = boost::program_options;
   po::options_description desc("Allowed options");
   desc.add_options()("fibers", po::value<bool>()->default_value(false),
-                     "Use fibers")("threads",
-                                   po::value<int>()->default_value(4),
-                                   "Number of worker threads")(
+                     "Use fibers")("sleep",
+                                   po::value<bool>()->default_value(false),
+                                   "Sleep 4microsecs before reply")(
+      "threads", po::value<int>()->default_value(4),
+      "Number of worker threads")(
       "socket", po::value<std::string>()->default_value("/tmp/pingpong.sock"),
       "Socket path");
 
@@ -142,10 +152,11 @@ int main(int argc, char *argv[]) {
   po::notify(vm);
 
   ServerConfig config{.use_fibers = vm["fibers"].as<bool>(),
+                      .sleep = vm["sleep"].as<bool>(),
                       .num_threads = vm["threads"].as<int>(),
                       .socket_path = vm["socket"].as<std::string>()};
 
-  PingPongService service(config.use_fibers);
+  PingPongService service(config.use_fibers, config.sleep);
   ServerBuilder builder;
 
   // Resource quota applies to both modes
@@ -164,7 +175,8 @@ int main(int argc, char *argv[]) {
 
   auto server = builder.BuildAndStart();
   std::cout << "Server running in " << (config.use_fibers ? "fiber" : "thread")
-            << " mode with " << config.num_threads << " threads\n";
+            << " mode with " << config.num_threads << " threads"
+            << " with sleep? " << config.sleep << "\n";
   server->Wait();
 
   return 0;
