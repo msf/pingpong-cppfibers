@@ -1,0 +1,14 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+proto = { path = "../proto" }
+tokio.workspace = true
+tonic = { workspace = true, features = ["transport"] }
+clap.workspace = true
+anyhow.workspace = true
+futures.workspace = true
+libc = "0.2"
+async-stream = "0.3.6"
